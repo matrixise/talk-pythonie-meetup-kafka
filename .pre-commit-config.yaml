@@ -1,0 +1,58 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/mirrors-isort
+    rev: 'v4.3.21'  # Use the revision sha / tag you want to point at
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/psf/black
+    rev: 19.10b0
+    hooks:
+      - id: black
+        language_version: python3.8
+
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.8.3
+    hooks:
+      - id: flake8
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.1.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=800']
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-bandit
+    rev: v1.0.4
+    hooks:
+    - id: python-bandit-vulnerability-check
+      args: [-l, --recursive, -x, tests, -s, "B320,B410"]
+      files: .py$
+#
+#      - id: bandit
+#        name: bandit
+#        description: Find common security issues in your Python code using bandit
+#        entry: bandit
+#        args: [
+#          '-ll',
+#          '--ini', 'setup.cfg',
+#          '--recursive',
+#        ]
+#        language: python
+#        types: [python]
+#
+#      # Vulture
+#      # https://github.com/jendrikseipp/vulture
+#      - id: vulture
+#        name: vulture
+#        description: Find dead Python code
+#        entry: vulture
+#        args: [
+#            "--min-confidence", "90",
+#            "--exclude", "*env*", "docs/",
+#            ".",
+#        ]
+#        language: system
+#        types: [python]
