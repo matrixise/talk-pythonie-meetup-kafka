@@ -4,10 +4,13 @@ import typing
 from functools import cached_property
 
 import mode
+from mode import get_logger
 from mode.utils.types.trees import NodeT
 
-import minio
-from aiokafka import AIOKafkaProducer
+import minio  # type: ignore
+from aiokafka import AIOKafkaProducer  # type: ignore
+
+logger = get_logger(__name__)
 
 
 class BrokerService(mode.Service):
@@ -46,8 +49,6 @@ class ObjectNotFound(Exception):
 
 
 class ObjectStoreService(mode.Service):
-    client: minio.Minio = None
-
     def __init__(
         self,
         *,
@@ -89,7 +90,7 @@ class ObjectStoreService(mode.Service):
         if not exists:
             await self.make_bucket()
 
-    async def store_image(self, object_name: str, content: bytes):
+    async def store_object(self, object_name: str, content: bytes):
         return await self.loop.run_in_executor(
             None,
             self.client.put_object,
@@ -99,7 +100,7 @@ class ObjectStoreService(mode.Service):
             len(content),
         )
 
-    async def fetch_image(self, object_name: str):
+    async def fetch_object(self, object_name: str):
         try:
             response = await self.loop.run_in_executor(
                 None, self.client.get_object, self.bucket_name, object_name

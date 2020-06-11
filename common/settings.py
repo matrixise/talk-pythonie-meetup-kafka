@@ -1,4 +1,4 @@
-from decouple import Csv, config
+from decouple import Csv, config  # type: ignore
 
 DEBUG = config("DEBUG", cast=bool, default=False)
 CONSUMER_GROUP_ID = config("CONSUMER_GROUP_ID", cast=str, default="consumer-1")

@@ -1,35 +1,38 @@
 import io
 
-from starlette import status
 from starlette.responses import StreamingResponse, UJSONResponse
 
 import pydantic
-import settings
-from fastapi import Body, Depends, FastAPI, HTTPException
+from common import settings
+from common.records import MessageRecord
+from common.services import BrokerService, ObjectNotFound, ObjectStoreService
+from fastapi import Body, Depends, FastAPI, HTTPException, status
 from fastapi.routing import APIRouter
-from handlers import StartAndStopEventHandler
-from helpers import (
+from producer_src.handlers import StartAndStopEventHandler
+from producer_src.helpers import (
     get_broker_service,
     get_identifier,
     get_object_store_service,
 )
-from middlewares import AddIdentifierMiddleWare
-from records import MessageRecord
-from schemas import PayloadSchema
-from services import BrokerService, ObjectNotFound, ObjectStoreService
+from producer_src.middlewares import AddIdentifierMiddleWare
+from producer_src.schemas import PayloadSchema
 
 router = APIRouter()
 
 
-@router.post("/", response_class=UJSONResponse)
+def get_message(
+    identifier: pydantic.UUID4 = Depends(get_identifier),
+    payload: PayloadSchema = Body(..., embed=False),
+) -> MessageRecord:
+    return MessageRecord(identifier=identifier, email=payload.email, url=payload.url)
+
+
+@router.post("/", response_class=UJSONResponse, status_code=status.HTTP_201_CREATED)
 async def request_screenshot(
     response: UJSONResponse,
-    payload: PayloadSchema = Body(..., embed=False),
     broker_service: BrokerService = Depends(get_broker_service),
-    identifier: pydantic.UUID4 = Depends(get_identifier),
+    message: MessageRecord = Depends(get_message),
 ):
-    message = MessageRecord(identifier=identifier, email=payload.email, url=payload.url)
-
     await broker_service.emit(message.dumps())
     response.headers["X-Identifier"] = str(message.identifier)
     return {"message": "🐍 is pretty cool!"}
@@ -41,7 +44,7 @@ async def get_screenshot(
     object_store_service: ObjectStoreService = Depends(get_object_store_service),
 ):
     try:
-        data = await object_store_service.fetch_image(f"{identifier}.png")
+        data = await object_store_service.fetch_object(f"{identifier}.png")
         document = io.BytesIO(data)
         return StreamingResponse(document, media_type="image/png")
     except ObjectNotFound:
@@ -60,3 +63,8 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app)

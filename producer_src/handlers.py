@@ -1,6 +1,6 @@
-import settings
+from common import settings
+from common.services import BrokerService, ObjectStoreService
 from fastapi import FastAPI
-from services import BrokerService, ObjectStoreService
 
 
 class StartAndStopEventHandler:
